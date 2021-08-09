@@ -34,6 +34,27 @@ public class Call {
 	}
 	
 	public void update(String status) {
+		//getting current system time
+		long currentTime = System.currentTimeMillis();
+		//preserving current call state
+		String currentState = callStatus;
+		//getting the current states current time
+		long stateTime = activeTime.get(currentState);
+		//Determine how many MS since startTime and adding any prior events to running total
+		stateTime = (currentTime - startTime)+stateTime;
+		//updating startTime to last change and status to new status
+		startTime = currentTime;
+		callStatus = status;
+		//updating time tracker
+		activeTime.replace(currentState, stateTime);
+		
+		
+		
+		
+	}
+	public Hashtable<String,Long> endStats(){
+		
+		return activeTime;
 		
 	}
 

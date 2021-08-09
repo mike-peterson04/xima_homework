@@ -12,14 +12,19 @@ public class CallDataHandlerImpl implements CallDataHandler {
 	@Override
 	public void onCallData(String data) {
 		String[] breakDown = data.split(",");
+		//check to see if call has already been created
 		if (activeCalls.containsKey(breakDown[0])) {
-			System.out.println("if");
-			System.out.println(data);
+			//if call is dropping move to completed calls
+			if (breakDown[1]=="DROP") {
+				completeCalls.put(breakDown[0], activeCalls.remove(breakDown[0]));
+				completeCalls.get(breakDown[0]).update(breakDown[1]);
+			}
+			//updating call status if not dropped
+			else {
+				activeCalls.get(breakDown[0]).update(breakDown[1]);
+				
+			}
 			
-		}
-		else if(activeCalls.containsKey(breakDown[0])) {
-			System.out.println("else if");
-			System.out.println(data);
 		}
 		else {
 			activeCalls.put(breakDown[0], new Call(data));
