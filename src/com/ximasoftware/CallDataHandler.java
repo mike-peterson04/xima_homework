@@ -38,9 +38,7 @@ public interface CallDataHandler {
 	long getTotalEventDuration(EventType type);
 
 	/**
-	 * Given a party, calculates the total duration of all calls they were on.
-	 * The duration of a call includes all of the time between the DIAL and DROP
-	 * events.
+	 *.
 	 *
 	 * @param party
 	 *            The party for which you interested in his call time.
