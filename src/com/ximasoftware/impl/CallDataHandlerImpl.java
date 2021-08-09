@@ -15,12 +15,14 @@ public class CallDataHandlerImpl implements CallDataHandler {
 		//check to see if call has already been created
 		if (activeCalls.containsKey(breakDown[0])) {
 			//if call is dropping move to completed calls
-			if (breakDown[1]=="DROP") {
+			if (breakDown[1].contains("DROP")) {
+				System.out.println("Call Ended");
 				completeCalls.put(breakDown[0], activeCalls.remove(breakDown[0]));
 				completeCalls.get(breakDown[0]).update(breakDown[1]);
 			}
 			//updating call status if not dropped
 			else {
+				System.out.println("Call updated " +breakDown[1]);
 				activeCalls.get(breakDown[0]).update(breakDown[1]);
 				
 			}
@@ -34,14 +36,13 @@ public class CallDataHandlerImpl implements CallDataHandler {
 
 	@Override
 	public int getNumberOfActiveCalls() {
-		// TODO Auto-generated method stub
-		return 0;
+		
+		return activeCalls.size();
 	}
 
 	@Override
 	public int getNumberOfCompletedCalls() {
-		// TODO Auto-generated method stub
-		return 0;
+		return completeCalls.size();
 	}
 
 	@Override
