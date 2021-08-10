@@ -1,6 +1,7 @@
 package com.ximasoftware.impl;
 
-import java.util.Hashtable;
+import java.util.HashMap;
+
 
 public class Call {
 	String id;
@@ -8,7 +9,7 @@ public class Call {
 	String callingParty;
 	String recievingParty;
 	long startTime;
-	Hashtable<String,Long> activeTime;
+	HashMap<String,Long> activeTime;
 
 	public Call(String callData) {
 		String[] breakdown = callData.split(",");
@@ -17,14 +18,14 @@ public class Call {
 		callingParty = breakdown[2];
 		recievingParty = breakdown[3];
 		startTime = System.currentTimeMillis();
-		//generating table in private function for legibility
+		//generating Map in private function for legibility
 		this.generateTimeTracker();
 		
 	}
 	
 	private void generateTimeTracker() {
 		long startTime = 0;
-		activeTime = new Hashtable<String,Long>();
+		activeTime = new HashMap<String,Long>();
 		activeTime.put("DIAL", startTime);
 		activeTime.put("RING", startTime);
 		activeTime.put("TALK", startTime);
@@ -50,11 +51,6 @@ public class Call {
 		
 		
 		
-		
-	}
-	public Hashtable<String,Long> endStats(){
-		
-		return activeTime;
 		
 	}
 
