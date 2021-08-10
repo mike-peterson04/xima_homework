@@ -10,6 +10,7 @@ public class CallDataHandlerImpl implements CallDataHandler {
 	ConcurrentHashMap<String,Call> activeCalls = new ConcurrentHashMap<String,Call>();
 	ConcurrentHashMap<String,Call> completeCalls = new ConcurrentHashMap<String,Call>();
 	ConcurrentHashMap<String,Long> callTotals;
+	ConcurrentHashMap<String,Party> parties = new ConcurrentHashMap<String,Party>();
 
 	@Override
 	public void onCallData(String data) {
@@ -31,13 +32,37 @@ public class CallDataHandlerImpl implements CallDataHandler {
 				else {
 					update.update(breakDown[1]);
 					activeCalls.replace(breakDown[0],update);
-					this.eventManager(update);
+					//this.eventManager(update);
 					
 				}
 				
 			}
 			else {
-				activeCalls.put(breakDown[0], new Call(data));
+				Call call = new Call(data);
+				if(parties.containsKey(breakDown[2])&& parties.containsKey(breakDown[3])) {
+					
+					parties.get(breakDown[2]).addCall(call);
+					parties.get(breakDown[3]).addCall(call);	
+				}
+				else if(parties.containsKey(breakDown[2])||parties.containsKey(breakDown[3])) {
+					if(parties.containsKey(breakDown[2])){
+						parties.get(breakDown[2]).addCall(call);
+						parties.put(breakDown[3], new Party(breakDown[3],call));
+						}
+					else if(parties.containsKey(breakDown[3])) {
+						parties.get(breakDown[3]).addCall(call);
+						parties.put(breakDown[2], new Party(breakDown[2],call));
+						}
+					}
+				else {
+					
+					parties.put(breakDown[2], new Party(breakDown[2],call));
+					parties.put(breakDown[3], new Party(breakDown[3],call));
+					
+				}
+				
+				
+				activeCalls.put(breakDown[0], call);
 			}
 			
 		}
@@ -78,8 +103,12 @@ public class CallDataHandlerImpl implements CallDataHandler {
 
 	@Override
 	public long getTotalCallTimeForParty(String party) {
+		Party agent = parties.get(party);
+		if (agent == null) {
+			return 0;
+		}
 		
-		return 0;
+		return agent.timeTotal();
 	}
 	
 	private void eventManager(Call updater) {
@@ -96,7 +125,6 @@ public class CallDataHandlerImpl implements CallDataHandler {
 			callTotals.put("TOTAL", a);
 			
 		}
-		else {
 			ConcurrentHashMap<String,Long> updaterCall = updater.activeTime;
 			
 			updaterCall.forEach(
@@ -112,7 +140,7 @@ public class CallDataHandlerImpl implements CallDataHandler {
 			
 	
 			
-		}
+		
 	}
 
 }
