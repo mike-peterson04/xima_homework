@@ -1,40 +1,52 @@
 package com.ximasoftware.impl;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import com.ximasoftware.CallDataHandler;
 import com.ximasoftware.EventType;
 
 public class CallDataHandlerImpl implements CallDataHandler {
 	//I think storing completed calls in a database would be a more scalable solution but for purposes of this example I am storing them in memory
-	HashMap<String,Call> activeCalls = new HashMap<String,Call>();
-	HashMap<String,Call> completeCalls = new HashMap<String,Call>();
-	HashMap<String,Long> callTotals;
+	ConcurrentHashMap<String,Call> activeCalls = new ConcurrentHashMap<String,Call>();
+	ConcurrentHashMap<String,Call> completeCalls = new ConcurrentHashMap<String,Call>();
+	ConcurrentHashMap<String,Long> callTotals;
 
 	@Override
 	public void onCallData(String data) {
 		String[] breakDown = data.split(",");
 		//check to see if call has already been created
-		if (activeCalls.containsKey(breakDown[0])) {
-			//if call is dropping move to completed calls
-			if (breakDown[1].contains("DROP")) {
-				if(activeCalls.containsKey(breakDown[0])) {
-					completeCalls.put(breakDown[0], activeCalls.remove(breakDown[0]));
-					completeCalls.get(breakDown[0]).update(breakDown[1]);
-					this.eventManager(completeCalls.get(breakDown[0]));	
+		try {
+			if (activeCalls.containsKey(breakDown[0])) {
+				//if call is dropping move to completed calls
+				Call update = activeCalls.get(breakDown[0]);
+				if (breakDown[1].contains("DROP")) {
+						activeCalls.remove(breakDown[0]);
+						completeCalls.put(breakDown[0], update);
+						update.update(breakDown[1]);
+						
+						this.eventManager(update);	
+					
+				}
+				//updating call status if not dropped
+				else {
+					update.update(breakDown[1]);
+					activeCalls.replace(breakDown[0],update);
+					this.eventManager(update);
+					
 				}
 				
 			}
-			//updating call status if not dropped
 			else {
-				activeCalls.get(breakDown[0]).update(breakDown[1]);
-				this.eventManager(activeCalls.get(breakDown[0]));
-				
+				activeCalls.put(breakDown[0], new Call(data));
 			}
 			
 		}
-		else {
-			activeCalls.put(breakDown[0], new Call(data));
+		catch(Exception e) {
+			System.out.println(e);
+			System.out.println(data);
 		}
+		
+		
 
 	}
 
@@ -66,7 +78,7 @@ public class CallDataHandlerImpl implements CallDataHandler {
 
 	@Override
 	public long getTotalCallTimeForParty(String party) {
-		// TODO Auto-generated method stub
+		
 		return 0;
 	}
 	
@@ -75,7 +87,7 @@ public class CallDataHandlerImpl implements CallDataHandler {
 		if (callTotals == null){
 			
 			long a = 0;
-			callTotals = new HashMap<String,Long>();
+			callTotals = new ConcurrentHashMap<String,Long>();
 			callTotals.put("DIAL", a);
 			callTotals.put("RING", a);
 			callTotals.put("TALK", a);
@@ -85,7 +97,7 @@ public class CallDataHandlerImpl implements CallDataHandler {
 			
 		}
 		else {
-			HashMap<String,Long> updaterCall = updater.activeTime;
+			ConcurrentHashMap<String,Long> updaterCall = updater.activeTime;
 			
 			updaterCall.forEach(
 				    (key, value) -> callTotals.merge( key, value, (v1, v2) ->  v1 + v2)
