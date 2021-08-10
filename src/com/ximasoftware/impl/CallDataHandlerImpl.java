@@ -1,5 +1,6 @@
 package com.ximasoftware.impl;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import com.ximasoftware.CallDataHandler;
@@ -7,7 +8,7 @@ import com.ximasoftware.EventType;
 
 public class CallDataHandlerImpl implements CallDataHandler {
 	//I think storing completed calls in a database would be a more scalable solution but for purposes of this example I am storing them in memory
-	ConcurrentHashMap<String,Call> activeCalls = new ConcurrentHashMap<String,Call>();
+	Hashtable<String,Call> activeCalls = new Hashtable<String,Call>();
 	ConcurrentHashMap<String,Call> completeCalls = new ConcurrentHashMap<String,Call>();
 	ConcurrentHashMap<String,Long> callTotals;
 	ConcurrentHashMap<String,Party> parties = new ConcurrentHashMap<String,Party>();
@@ -16,27 +17,19 @@ public class CallDataHandlerImpl implements CallDataHandler {
 	public void onCallData(String data) {
 		String[] breakDown = data.split(",");
 		//check to see if call has already been created
-		try {
-			if (activeCalls.containsKey(breakDown[0])) {
-				//if call is dropping move to completed calls
-				Call update = activeCalls.get(breakDown[0]);
-				if (breakDown[1].contains("DROP")) {
-						activeCalls.remove(breakDown[0]);
-						completeCalls.put(breakDown[0], update);
-						update.update(breakDown[1]);
-						
-						this.eventManager(update);	
-					
-				}
-				//updating call status if not dropped
-				else {
-					update.update(breakDown[1]);
-					activeCalls.replace(breakDown[0],update);
-					//this.eventManager(update);
-					
-				}
-				
+		
+		if (activeCalls.containsKey(breakDown[0])) {
+			try {
+				this.updateCall(breakDown);
 			}
+			catch(Exception e) {
+				
+					System.out.println(e);
+					System.out.println(data);
+			}
+				
+		}
+			
 			else {
 				Call call = new Call(data);
 				if(parties.containsKey(breakDown[2])&& parties.containsKey(breakDown[3])) {
@@ -66,14 +59,32 @@ public class CallDataHandlerImpl implements CallDataHandler {
 			}
 			
 		}
-		catch(Exception e) {
-			System.out.println(e);
-			System.out.println(data);
-		}
 		
 		
-
+	private void updateCall(String[] breakDown) {
+		
+			//if call is dropping move to completed calls
+			Call update = activeCalls.get(breakDown[0]);
+			if (breakDown[1].contains("DROP")) {
+					activeCalls.remove(breakDown[0]);
+					completeCalls.put(breakDown[0], update);
+					update.update(breakDown[1]);
+					
+					this.eventManager(update);	
+				
+			}
+			//updating call status if not dropped
+			else {
+				update.update(breakDown[1]);
+				activeCalls.replace(breakDown[0],update);
+				//this.eventManager(update);
+				
+			}
+			
+		
 	}
+
+	
 
 	@Override
 	public int getNumberOfActiveCalls() {
@@ -104,6 +115,7 @@ public class CallDataHandlerImpl implements CallDataHandler {
 	@Override
 	public long getTotalCallTimeForParty(String party) {
 		Party agent = parties.get(party);
+		//check to see if a valid party was requested
 		if (agent == null) {
 			return 0;
 		}
@@ -136,10 +148,7 @@ public class CallDataHandlerImpl implements CallDataHandler {
 			}
 			total += callTotals.get("TOTAL");
 			callTotals.replace("TOTAL",total);
-			
-			
-	
-			
+					
 		
 	}
 
