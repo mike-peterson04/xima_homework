@@ -15,6 +15,9 @@ public class CallDataHandlerImpl implements CallDataHandler {
 
 	@Override
 	public void onCallData(String data) {
+		if (callTotals == null){
+			this.timeTableCreator();
+		}
 		String[] breakDown = data.split(",");
 		//check to see if call has already been created
 		
@@ -128,20 +131,20 @@ public class CallDataHandlerImpl implements CallDataHandler {
 		//we can rapidly find the party due to being stored in a hashmap then iterate through each call and total the current time.
 		return agent.timeTotal();
 	}
+	private void timeTableCreator() {
+		long a = 0;
+		callTotals = new ConcurrentHashMap<String,Long>();
+		callTotals.put("DIAL", a);
+		callTotals.put("RING", a);
+		callTotals.put("TALK", a);
+		callTotals.put("HOLD", a);
+		callTotals.put("DROP", a);
+		callTotals.put("TOTAL", a);
+	}
 	
 	private void eventManager(Call updater) {
 		//tracking time of completed calls that I think would make more sense to store in a DB as opposed to in memory if this were truly being implemented but keeping in memory for purposes of this assignment
-		if (callTotals == null){
-			long a = 0;
-			callTotals = new ConcurrentHashMap<String,Long>();
-			callTotals.put("DIAL", a);
-			callTotals.put("RING", a);
-			callTotals.put("TALK", a);
-			callTotals.put("HOLD", a);
-			callTotals.put("DROP", a);
-			callTotals.put("TOTAL", a);
-			
-		}
+		
 			ConcurrentHashMap<String,Long> updaterCall = updater.activeTime;
 			
 			updaterCall.forEach(
